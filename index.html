@@ -1,696 +1,185 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-<title>Dashboard Monitoring Hemat Energi Sekolah</title>
-
-<!-- Chart JS -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- XLSX Export -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<!-- Font Awesome -->
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-
-<style>
-
-:root{
-  --bg:#0f172a;
-  --card:#1e293b;
-  --primary:#22c55e;
-  --secondary:#0ea5e9;
-  --danger:#ef4444;
-  --text:#ffffff;
-  --soft:#94a3b8;
-}
-
-.light-mode{
-  --bg:#f1f5f9;
-  --card:#ffffff;
-  --primary:#16a34a;
-  --secondary:#0284c7;
-  --danger:#dc2626;
-  --text:#0f172a;
-  --soft:#475569;
-}
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Segoe UI',sans-serif;
-}
-
-body{
-  background:var(--bg);
-  color:var(--text);
-  transition:.3s;
-}
-
-header{
-  background:linear-gradient(135deg,var(--primary),var(--secondary));
-  padding:25px;
-  text-align:center;
-  box-shadow:0 4px 15px rgba(0,0,0,.3);
-}
-
-header h1{
-  font-size:34px;
-}
-
-header p{
-  margin-top:10px;
-  opacity:.9;
-}
-
-.container{
-  width:95%;
-  max-width:1500px;
-  margin:auto;
-  padding:20px;
-}
-
-.top-actions{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:20px;
-}
-
-.btn{
-  border:none;
-  padding:12px 18px;
-  border-radius:12px;
-  cursor:pointer;
-  font-weight:bold;
-  color:white;
-  transition:.3s;
-}
-
-.btn-primary{
-  background:var(--primary);
-}
-
-.btn-secondary{
-  background:var(--secondary);
-}
-
-.btn-danger{
-  background:var(--danger);
-}
-
-.btn-dark{
-  background:#334155;
-}
-
-.btn:hover{
-  transform:translateY(-2px);
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:20px;
-  margin-bottom:25px;
-}
-
-.card{
-  background:var(--card);
-  padding:20px;
-  border-radius:20px;
-  box-shadow:0 10px 20px rgba(0,0,0,.2);
-}
-
-.card h3{
-  color:var(--soft);
-  margin-bottom:15px;
-  font-size:15px;
-}
-
-.card .value{
-  font-size:40px;
-  font-weight:bold;
-}
-
-.section-title{
-  margin-bottom:20px;
-  color:var(--secondary);
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:15px;
-}
-
-input, select{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:12px;
-  background:#334155;
-  color:white;
-}
-
-.light-mode input,
-.light-mode select{
-  background:#e2e8f0;
-  color:#000;
-}
-
-.chart-container{
-  background:var(--card);
-  padding:20px;
-  border-radius:20px;
-  margin-bottom:25px;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-}
-
-th{
-  background:var(--secondary);
-  padding:14px;
-}
-
-td{
-  padding:12px;
-  background:var(--card);
-  border-bottom:1px solid #334155;
-}
-
-.badge{
-  padding:6px 12px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:bold;
-}
-
-.hemat{
-  background:#166534;
-  color:#bbf7d0;
-}
-
-.boros{
-  background:#7f1d1d;
-  color:#fecaca;
-}
-
-footer{
-  text-align:center;
-  padding:30px;
-  opacity:.7;
-}
-
-.notification{
-  position:fixed;
-  top:20px;
-  right:20px;
-  background:var(--danger);
-  color:white;
-  padding:15px 20px;
-  border-radius:12px;
-  display:none;
-  z-index:999;
-  box-shadow:0 10px 20px rgba(0,0,0,.3);
-}
-
-@media(max-width:768px){
-
-  header h1{
-    font-size:26px;
-  }
-
-  .value{
-    font-size:28px !important;
-  }
-
-}
-
-</style>
-</head>
-
-<body>
-
-<div class="notification" id="notification">
-⚠️ Pemakaian listrik melebihi batas!
-</div>
-
-<header>
-  <h1>
-    ⚡ Dashboard Monitoring Hemat Energi
-  </h1>
-
-  <p>
-    Program Kader Energi Sekolah 2026–2027
-  </p>
-</header>
-
-<div class="container">
-
-  <!-- ACTION -->
-  <div class="top-actions">
-
-    <button class="btn btn-primary"
-      onclick="exportExcel()">
-      <i class="fa fa-file-excel"></i>
-      Export Excel
-    </button>
-
-    <button class="btn btn-secondary"
-      onclick="exportPDF()">
-      <i class="fa fa-file-pdf"></i>
-      Print PDF
-    </button>
-
-    <button class="btn btn-dark"
-      onclick="toggleTheme()">
-      <i class="fa fa-moon"></i>
-      Dark / Light
-    </button>
-
-    <button class="btn btn-danger"
-      onclick="hapusSemua()">
-      <i class="fa fa-trash"></i>
-      Reset Data
-    </button>
-
-  </div>
-
-  <!-- STATS -->
-  <div class="grid">
-
-    <div class="card">
-      <h3>Total Data</h3>
-      <div class="value" id="totalData">0</div>
-    </div>
-
-    <div class="card">
-      <h3>Total kWh</h3>
-      <div class="value" id="totalKwh">0</div>
-    </div>
-
-    <div class="card">
-      <h3>Rata-rata</h3>
-      <div class="value" id="avgKwh">0</div>
-    </div>
-
-    <div class="card">
-      <h3>Status Energi</h3>
-      <div class="value" id="statusHemat">-</div>
-    </div>
-
-  </div>
-
-  <!-- FORM -->
-  <div class="card">
-
-    <h2 class="section-title">
-      📋 Input Monitoring
-    </h2>
-
-    <div class="form-grid">
-
-      <input type="date" id="tanggal">
-
-      <select id="bulanFilter">
-        <option value="">Filter Bulan</option>
-      </select>
-
-      <input type="number"
-      id="meterPagi"
-      placeholder="Meter Pagi">
-
-      <input type="number"
-      id="meterSore"
-      placeholder="Meter Sore">
-
-      <select id="ruangan">
-        <option value="">Pilih Ruangan</option>
-        <option>Meteran KWH 1</option>
-        <option>Meteran KWH 2</option>
-        <option>Meteran KWH 3</option>
-        <option>Meteran KWH 4</option>
-        <option>Meteran KWH 5</option>
-      </select>
-
-      <button class="btn btn-primary"
-      onclick="tambahData()">
-        Simpan Data
-      </button>
-
-    </div>
-
-  </div>
-
-  <!-- CHART -->
-  <div class="chart-container">
-
-    <h2 class="section-title">
-      📈 Grafik Konsumsi Energi
-    </h2>
-
-    <canvas id="energyChart"></canvas>
-
-  </div>
-
-  <!-- TABLE -->
-  <div class="card">
-
-    <h2 class="section-title">
-      📊 Laporan Monitoring
-    </h2>
-
-    <table>
-
-      <thead>
-
-        <tr>
-          <th>Tanggal</th>
-          <th>Ruangan</th>
-          <th>Pagi</th>
-          <th>Sore</th>
-          <th>Pemakaian</th>
-          <th>Status</th>
-          <th>Aksi</th>
-        </tr>
-
-      </thead>
-
-      <tbody id="tableBody"></tbody>
-
-    </table>
-
-  </div>
-
-</div>
-
-<footer>
-  Dashboard Monitoring Energi Sekolah
-  • Local Storage Enabled
-</footer>
-
-<script>
-
-let monitoringData =
-JSON.parse(localStorage.getItem(
-"monitoringEnergi")) || [];
-
-const ctx =
-document.getElementById("energyChart");
-
-const chart = new Chart(ctx, {
-
-  type:'bar',
-
-  data:{
-    labels:[],
-    datasets:[{
-      label:'Pemakaian kWh',
-      data:[]
-    }]
-  },
-
-  options:{
-    responsive:true,
-    plugins:{
-      legend:{
-        labels:{
-          color:'white'
-        }
-      }
-    },
-    scales:{
-      x:{
-        ticks:{
-          color:'white'
-        }
-      },
-      y:{
-        ticks:{
-          color:'white'
-        }
-      }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hub Navigasi // Semesta Peradaban Vesperal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #04070d; color: #e2e8f0; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-card {
+      background: rgba(13, 21, 39, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(27, 43, 77, 0.8);
+      transition: all 0.2s ease;
     }
-  }
-
-});
-
-function saveData(){
-
-  localStorage.setItem(
-    "monitoringEnergi",
-    JSON.stringify(monitoringData)
-  );
-
-}
-
-function tambahData(){
-
-  const tanggal =
-  document.getElementById("tanggal").value;
-
-  const meterPagi =
-  parseFloat(document.getElementById(
-    "meterPagi").value);
-
-  const meterSore =
-  parseFloat(document.getElementById(
-    "meterSore").value);
-
-  const ruangan =
-  document.getElementById("ruangan").value;
-
-  if(!tanggal || !ruangan ||
-    isNaN(meterPagi) ||
-    isNaN(meterSore)){
-
-    alert("Lengkapi data!");
-    return;
-  }
-
-  if(meterSore < meterPagi){
-
-    alert("Meter sore salah!");
-    return;
-  }
-
-  const pemakaian =
-    meterSore - meterPagi;
-
-  const data = {
-    tanggal,
-    ruangan,
-    meterPagi,
-    meterSore,
-    pemakaian
-  };
-
-  monitoringData.push(data);
-
-  saveData();
-
-  renderTable();
-  updateChart();
-  updateStats();
-
-  if(pemakaian > 20){
-    showNotification();
-  }
-
-}
-
-function renderTable(){
-
-  const tbody =
-  document.getElementById("tableBody");
-
-  tbody.innerHTML = "";
-
-  monitoringData.forEach((item,index)=>{
-
-    const status =
-    item.pemakaian <= 20
-    ? `<span class="badge hemat">Hemat</span>`
-    : `<span class="badge boros">Boros</span>`;
-
-    tbody.innerHTML += `
-
-    <tr>
-
-      <td>${item.tanggal}</td>
-
-      <td>${item.ruangan}</td>
-
-      <td>${item.meterPagi}</td>
-
-      <td>${item.meterSore}</td>
-
-      <td>${item.pemakaian} kWh</td>
-
-      <td>${status}</td>
-
-      <td>
-
-        <button class="btn btn-danger"
-        onclick="hapusData(${index})">
-
-          Hapus
-
-        </button>
-
-      </td>
-
-    </tr>
-
-    `;
-  });
-
-}
-
-function hapusData(index){
-
-  if(confirm("Hapus data?")){
-
-    monitoringData.splice(index,1);
-
-    saveData();
-
-    renderTable();
-    updateChart();
-    updateStats();
-  }
-
-}
-
-function hapusSemua(){
-
-  if(confirm("Reset semua data?")){
-
-    monitoringData = [];
-
-    saveData();
-
-    renderTable();
-    updateChart();
-    updateStats();
-  }
-
-}
-
-function updateChart(){
-
-  chart.data.labels =
-    monitoringData.map(d=>d.tanggal);
-
-  chart.data.datasets[0].data =
-    monitoringData.map(d=>d.pemakaian);
-
-  chart.update();
-
-}
-
-function updateStats(){
-
-  document.getElementById("totalData")
-  .innerText = monitoringData.length;
-
-  const total =
-  monitoringData.reduce((sum,item)=>
-
-    sum + item.pemakaian
-
-  ,0);
-
-  document.getElementById("totalKwh")
-  .innerText = total.toFixed(1);
-
-  const avg =
-  monitoringData.length
-  ? total / monitoringData.length
-  : 0;
-
-  document.getElementById("avgKwh")
-  .innerText = avg.toFixed(1);
-
-  document.getElementById("statusHemat")
-  .innerHTML =
-    avg <= 20
-    ? "✅ Hemat"
-    : "⚠️ Boros";
-
-}
-
-function exportExcel(){
-
-  if(monitoringData.length === 0){
-
-    alert("Belum ada data!");
-    return;
-  }
-
-  const worksheet =
-  XLSX.utils.json_to_sheet(monitoringData);
-
-  const workbook =
-  XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(
-    workbook,
-    worksheet,
-    "Monitoring Energi"
-  );
-
-  XLSX.writeFile(
-    workbook,
-    "laporan_monitoring_energi.xlsx"
-  );
-
-}
-
-function exportPDF(){
-
-  window.print();
-
-}
-
-function toggleTheme(){
-
-  document.body.classList.toggle(
-    "light-mode"
-  );
-
-}
-
-function showNotification(){
-
-  const notif =
-  document.getElementById(
-    "notification"
-  );
-
-  notif.style.display = "block";
-
-  setTimeout(()=>{
-
-    notif.style.display = "none";
-
-  },3000);
-
-}
-
-renderTable();
-updateChart();
-updateStats();
-
-</script>
+    .glass-card:hover {
+      border-color: #00f0ff;
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex flex-col justify-between">
+
+  <div class="max-w-6xl mx-auto w-full space-y-8">
+    
+    <!-- HEADER -->
+    <header class="glass-card p-6 rounded-2xl border-cyan-500/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <span class="font-mono text-xs text-cyan-400 tracking-widest uppercase block font-semibold">SEVEROZ GALAXY ARCHIVE // TIER 20</span>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Portal Navigasi Skenario Vesperal</h1>
+        <p class="text-xs text-slate-400 mt-1 font-mono">Pilih aplikasi engine cerita atau unduh draf data JSON repositori.</p>
+      </div>
+      <a href="https://github.com/almeedzalu25/Projek_Novel" target="_blank" class="px-4 py-2 rounded-lg bg-cyan-950 border border-cyan-500 text-cyan-300 hover:bg-cyan-900 font-mono text-xs flex items-center gap-2">
+        <span>📂 Buka Repositori GitHub</span>
+      </a>
+    </header>
+
+    <!-- KATEGORI 1: SKENARIO UTAMA -->
+    <section class="space-y-4">
+      <h2 class="font-mono text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+        Skenario Novel & Engine Master
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- Skenario 1 -->
+        <a href="Batas_Eksistensi-Vessperal.html" class="glass-card p-5 rounded-xl block group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">SKENARIO 1</span>
+            <span class="text-xs text-cyan-400 group-hover:translate-x-1 transition-transform">Buka ➔</span>
+          </div>
+          <h3 class="text-base font-bold text-white group-hover:text-cyan-300">Batas Eksistensi</h3>
+          <p class="text-xs text-slate-400 mt-1">Eksistensialisme di Batas Kehampaan (The Cold Contact, batas 12 tahun cahaya Severoz).</p>
+        </a>
+
+        <!-- Skenario 2 Lacorde Quest -->
+        <a href="Raymon_Lacorde_Quset.html" class="glass-card p-5 rounded-xl block group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-pink-950 text-pink-300 border border-pink-800">SKENARIO 2</span>
+            <span class="text-xs text-pink-400 group-hover:translate-x-1 transition-transform">Buka ➔</span>
+          </div>
+          <h3 class="text-base font-bold text-white group-hover:text-pink-300">Raymond Lacorde Quest</h3>
+          <p class="text-xs text-slate-400 mt-1">Infiltrasi biologis, asimilasi 75 target biokunci Cincin Solaria, dan kudeta takhta.</p>
+        </a>
+
+        <!-- Skenario 3 Interstellar -->
+        <a href="vesperal_skenario_3_interstellar.html" class="glass-card p-5 rounded-xl block group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800">SKENARIO 3</span>
+            <span class="text-xs text-purple-400 group-hover:translate-x-1 transition-transform">Buka ➔</span>
+          </div>
+          <h3 class="text-base font-bold text-white group-hover:text-purple-300">Vesperal Interstellar</h3>
+          <p class="text-xs text-slate-400 mt-1">Ekspansi melewati Great Filter dan transisi menuju Primeval Homeworlds antarbintang.</p>
+        </a>
+
+        <!-- Lompatan Peradaban -->
+        <a href="Lompatan_peradaban.html" class="glass-card p-5 rounded-xl block group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">EXPANSION</span>
+            <span class="text-xs text-emerald-400 group-hover:translate-x-1 transition-transform">Buka ➔</span>
+          </div>
+          <h3 class="text-base font-bold text-white group-hover:text-emerald-300">Lompatan Peradaban</h3>
+          <p class="text-xs text-slate-400 mt-1">Simulasi akselerasi teknologi dari Tier 20 menuju Kardashev I & lompatan FTL.</p>
+        </a>
+
+        <!-- Vesperal Contact Base -->
+        <a href="vesperal_skenario_1_contact.html" class="glass-card p-5 rounded-xl block group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">CORE S1</span>
+            <span class="text-xs text-slate-400 group-hover:translate-x-1 transition-transform">Buka ➔</span>
+          </div>
+          <h3 class="text-base font-bold text-white group-hover:text-cyan-300">Skenario 1 Contact</h3>
+          <p class="text-xs text-slate-400 mt-1">Engine basis pindaian anomali deselerasi Solymar dan protokol isolasi tertutup.</p>
+        </a>
+
+        <!-- Vesperal Lacorde Base -->
+        <a href="vesperal_skenario_2_lacorde.html" class="glass-card p-5 rounded-xl block group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">CORE S2</span>
+            <span class="text-xs text-slate-400 group-hover:translate-x-1 transition-transform">Buka ➔</span>
+          </div>
+          <h3 class="text-base font-bold text-white group-hover:text-pink-300">Skenario 2 Lacorde</h3>
+          <p class="text-xs text-slate-400 mt-1">Versi tracker penaklukan 15x10 paragraf dengan pelacak status biometrik.</p>
+        </a>
+
+        <!-- Vesperal Story Civilization Master -->
+        <a href="Vesperal%20Story%20Civilization%20(Severoz%20Galaxy).html" class="glass-card p-5 rounded-xl block group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">MASTER V1</span>
+            <span class="text-xs text-amber-400 group-hover:translate-x-1 transition-transform">Buka ➔</span>
+          </div>
+          <h3 class="text-base font-bold text-white group-hover:text-amber-300">Story Civilization (V1)</h3>
+          <p class="text-xs text-slate-400 mt-1">Engine edisi komprehensif pertama Severoz Galaxy Archive.</p>
+        </a>
+
+        <!-- Vesperal Story Civilization V2 -->
+        <a href="Vesperal%20Story%20Civilization%20V2%20(Severoz%20Galaxy)....html" class="glass-card p-5 rounded-xl block group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">MASTER V2</span>
+            <span class="text-xs text-amber-400 group-hover:translate-x-1 transition-transform">Buka ➔</span>
+          </div>
+          <h3 class="text-base font-bold text-white group-hover:text-amber-300">Story Civilization (V2)</h3>
+          <p class="text-xs text-slate-400 mt-1">Edisi termutakhir dengan 17 modul terintegrasi, Story Bible, dan Canon Lock.</p>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- KATEGORI 2: BERKAS DRAF & DATA JSON -->
+    <section class="space-y-4">
+      <h2 class="font-mono text-sm font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+        Data Draf & Basis Karakter (JSON)
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
+        
+        <a href="Batas%20Eksistensi=Vessperal%20(draft).json" download class="p-4 rounded-xl bg-hudcard border border-hudborder hover:border-cyan-400 flex flex-col justify-between space-y-2">
+          <div>
+            <span class="text-[10px] text-amber-400 block font-bold">DRAFT S1</span>
+            <strong class="text-white text-xs">Batas Eksistensi (Draft).json</strong>
+          </div>
+          <span class="text-[11px] text-cyan-300">⬇ Unduh Berkas</span>
+        </a>
+
+        <a href="Raymond%20Lacorde%20Vesperal%20draft%201.json" download class="p-4 rounded-xl bg-hudcard border border-hudborder hover:border-pink-400 flex flex-col justify-between space-y-2">
+          <div>
+            <span class="text-[10px] text-pink-400 block font-bold">DRAFT S2 (PART 1)</span>
+            <strong class="text-white text-xs">Raymond Lacorde Draft 1.json</strong>
+          </div>
+          <span class="text-[11px] text-pink-300">⬇ Unduh Berkas</span>
+        </a>
+
+        <a href="Raymond%20Lacorde%20Vesperal%20draft%202.json" download class="p-4 rounded-xl bg-hudcard border border-hudborder hover:border-pink-400 flex flex-col justify-between space-y-2">
+          <div>
+            <span class="text-[10px] text-pink-400 block font-bold">DRAFT S2 (PART 2)</span>
+            <strong class="text-white text-xs">Raymond Lacorde Draft 2.json</strong>
+          </div>
+          <span class="text-[11px] text-pink-300">⬇ Unduh Berkas</span>
+        </a>
+
+        <a href="characters_vesperal.json" download class="p-4 rounded-xl bg-hudcard border border-hudborder hover:border-emerald-400 flex flex-col justify-between space-y-2">
+          <div>
+            <span class="text-[10px] text-emerald-400 block font-bold">DATABASE</span>
+            <strong class="text-white text-xs">characters_vesperal.json</strong>
+          </div>
+          <span class="text-[11px] text-emerald-300">⬇ Unduh 110 Karakter</span>
+        </a>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="mt-12 text-center font-mono text-xs text-slate-500 border-t border-slate-800 pt-4">
+    Repositori: <a href="https://github.com/almeedzalu25/Projek_Novel" class="text-slate-400 hover:text-cyan-400">almeedzalu25/Projek_Novel</a> • GitHub Pages Engine
+  </footer>
 
 </body>
 </html>
