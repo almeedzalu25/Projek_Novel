@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Story of Civilization: Vesperal - Skenario 2 (Raymond Lacorde)</title>
+    <style>
+        :root {
+            --bg-primary: #0d0f14;
+            --bg-secondary: #141822;
+            --bg-tertiary: #1b2130;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-gold: #e2b774;
+            --accent-rose: #f43f5e;
+            --accent-lavender: #c084fc;
+            --accent-cyan: #38bdf8;
+            --border: #2d3748;
+            --marble: #f8fafc;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg-primary); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* SIDEBAR */
+        #sidebar { width: 320px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .side-header { padding: 18px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(226,183,116,0.1), transparent); }
+        .side-header h1 { font-size: 16px; color: var(--accent-gold); letter-spacing: 1px; text-transform: uppercase; }
+        .side-header p { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+        
+        .side-stats { padding: 14px 18px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border); font-size: 12px; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .stat-bar-container { height: 8px; background: #0f172a; border-radius: 4px; overflow: hidden; margin-top: 6px; border: 1px solid #334155; }
+        .stat-bar { height: 100%; background: linear-gradient(90deg, var(--accent-gold), var(--accent-rose)); width: 0%; transition: width 0.3s; }
+        
+        .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: #0b0e14; }
+        .nav-tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 11px; text-transform: uppercase; font-weight: 600; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; }
+        .nav-tab.active { color: var(--accent-gold); border-bottom-color: var(--accent-gold); background: var(--bg-secondary); }
+        
+        .char-search { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+        .char-search input { width: 100%; padding: 6px 10px; background: #0b0e14; border: 1px solid var(--border); border-radius: 4px; color: #fff; font-size: 12px; }
+        
+        .char-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .char-card { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 12px; transition: transform 0.15s, border-color 0.15s; }
+        .char-card:hover { border-color: var(--accent-gold); transform: translateY(-1px); }
+        .char-card.target-active { border-left: 4px solid var(--accent-rose); }
+        .char-card.conquered { border-left: 4px solid var(--success); opacity: 0.9; }
+        .char-card.senior { border-left: 4px solid var(--warning); }
+        .char-card.male { border-left: 4px solid #475569; }
+        .char-name { font-weight: 700; color: #fff; display: flex; justify-content: space-between; }
+        .char-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .char-badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase; }
+        .badge-target { background: rgba(244,63,94,0.2); color: var(--accent-rose); }
+        .badge-done { background: rgba(16,185,129,0.2); color: var(--success); }
+        .badge-senior { background: rgba(245,158,11,0.2); color: var(--warning); }
+        .badge-male { background: rgba(148,163,184,0.2); color: #cbd5e1; }
+        .char-appear { font-size: 11px; color: var(--accent-cyan); font-weight: 600; margin-top: 4px; }
+        
+        /* MAIN WORKSPACE */
+        #workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-toolbar { height: 50px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .toolbar-group { display: flex; align-items: center; gap: 10px; }
+        .btn { padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-gold { background: var(--accent-gold); color: #000; border-color: #d4a359; }
+        .btn-gold:hover { background: #f0c98d; }
+        .btn-outline { background: transparent; border-color: var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: var(--bg-tertiary); border-color: #475569; }
+        .btn-rose { background: var(--accent-rose); color: #fff; }
+        .btn-rose:hover { background: #e11d48; }
+        
+        .main-views { flex: 1; display: flex; overflow: hidden; position: relative; }
+        
+        /* TAB VIEW: NASKAH DRAFT */
+        .view-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .editor-container { flex: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        
+        .chapter-meta-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--bg-secondary); padding: 12px 18px; border-radius: 6px; border: 1px solid var(--border); }
+        .chapter-input-group { display: flex; align-items: center; gap: 12px; }
+        .chapter-input-group input, .chapter-input-group select { background: #0b0e14; border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 13px; }
+        
+        .validator-badges { display: flex; gap: 8px; font-size: 12px; }
+        .v-badge { padding: 4px 8px; border-radius: 4px; background: #0f172a; border: 1px solid var(--border); color: var(--text-muted); }
+        .v-badge.ok { border-color: var(--success); color: var(--success); }
+        .v-badge.error { border-color: var(--accent-rose); color: var(--accent-rose); }
+        
+        #editor { flex: 1; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 18px; color: var(--text-main); font-size: 14px; line-height: 1.8; resize: none; outline: none; font-family: 'Georgia', serif; }
+        #editor:focus { border-color: var(--accent-gold); }
+        
+        /* DETECTOR PANEL */
+        #detector-panel { width: 340px; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; padding: 16px; font-size: 12px; }
+        .det-title { font-size: 13px; font-weight: 700; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+        .det-detected-box { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 14px; }
+        .detected-tag { display: inline-block; padding: 3px 8px; border-radius: 12px; background: rgba(56,189,248,0.15); color: var(--accent-cyan); margin: 3px 2px; font-size: 11px; font-weight: 600; border: 1px solid rgba(56,189,248,0.3); }
+        .detected-tag.target { background: rgba(244,63,94,0.15); color: var(--accent-rose); border-color: rgba(244,63,94,0.3); }
+        
+        /* MODAL LORE BASELINE */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; }
+        .modal-box { width: 85%; max-width: 900px; height: 85vh; background: var(--bg-secondary); border: 1px solid var(--accent-gold); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.7); }
+        .modal-header { padding: 16px 20px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { font-size: 15px; color: var(--accent-gold); letter-spacing: 1px; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 24px; font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+        .modal-body h3 { color: var(--accent-gold); margin: 16px 0 8px 0; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+        .modal-body pre { background: #0b0e14; padding: 12px; border-radius: 4px; font-size: 11px; margin: 10px 0; overflow-x: auto; color: #94a3b8; }
+        .btn-close { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <div class="side-header">
+            <h1>Vesperal Canon Ledger</h1>
+            <p>Skenario 3: Lompatan Interstellar (Tier 20 Menuju Tier 1)</p>
+        </div>
+        
+        <div class="side-stats">
+            <div class="stat-row">
+                <span>Kelengkungan Metrik Alcubierre:</span>
+                <strong id="stat-biokeys" style="color: var(--accent-lavender)">0.02c -> Fold</strong>
+            </div>
+            <div class="stat-row">
+                <span>Progres Penembusan 12 Tahun Cahaya:</span>
+                <strong id="stat-percent" style="color: var(--accent-gold)">0.0 / 12.0 Ly</strong>
+            </div>
+            <div class="stat-bar-container">
+                <div id="biokey-progress" class="stat-bar"></div>
+            </div>
+            <div class="stat-row" style="margin-top: 8px;">
+                <span>Karakter Aktif di Naskah:</span>
+                <strong id="stat-active-chars" style="color: var(--accent-cyan)">0 / 110</strong>
+            </div>
+        </div>
+        
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="filterTab('all')">Semua (110)</div>
+            <div class="nav-tab" onclick="filterTab('target')">75 Target</div>
+            <div class="nav-tab" onclick="filterTab('senior')">5 Matriark</div>
+            <div class="nav-tab" onclick="filterTab('pria')">30 Pria</div>
+        </div>
+        
+        <div class="char-search">
+            <input type="text" id="char-search-input" placeholder="Cari nama, profesi, lokasi..." oninput="renderCharList()">
+        </div>
+        
+        <div class="char-list" id="character-roster">
+            <!-- Dynamically populated -->
+        </div>
+    </div>
+
+    <!-- MAIN WORKSPACE -->
+    <div id="workspace">
+        <div class="top-toolbar">
+            <div class="toolbar-group">
+                <button class="btn btn-gold" onclick="generateChapterOneClick()">⚡ 1-Click Susun Bab Otomatis</button>
+                <button class="btn btn-outline" onclick="openLoreModal()">📜 Buku Kanon & Lore</button>
+                <button class="btn btn-outline" onclick="highlightExplicitBlocks()">🔍 Cek Blok Eksplisit</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="btn btn-outline" onclick="exportDataJson()">💾 Ekspor JSON</button>
+                <button class="btn btn-outline" onclick="triggerImportJson()">📂 Impor JSON</button>
+                <input type="file" id="import-file" style="display:none;" onchange="handleImportJson(event)">
+                <button class="btn btn-rose" onclick="saveDraftToStorage()">Simpan Naskah</button>
+            </div>
+        </div>
+
+        <div class="main-views">
+            <!-- EDITOR VIEW -->
+            <div class="view-pane">
+                <div class="editor-container">
+                    <div class="chapter-meta-bar">
+                        <div class="chapter-input-group">
+                            <label style="font-size: 12px; font-weight: 600;">BAB:</label>
+                            <select id="chapter-select" onchange="changeChapter(this.value)">
+                                <!-- 1 to 200 -->
+                            </select>
+                            <input type="text" id="chapter-title" placeholder="Judul Bab..." style="width: 320px;" oninput="updateChapterMeta()">
+                        </div>
+                        <div class="validator-badges">
+                            <div class="v-badge" id="badge-paragraphs">Paragraf: 0 / 15</div>
+                            <div class="v-badge" id="badge-sentences">Kalimat/P: Cek</div>
+                            <div class="v-badge" id="badge-words">Total Kata: 0</div>
+                        </div>
+                    </div>
+                    
+                    <textarea id="editor" placeholder="Ketikkan naskah bab di sini, atau tekan tombol '1-Click Susun Bab Otomatis' di atas untuk merangkai naskah 15 paragraf x 10 kalimat sesuai beat cerita..." oninput="onEditorInput()"></textarea>
+                </div>
+            </div>
+
+            <!-- DETECTOR PANEL -->
+            <div id="detector-panel">
+                <div class="det-title">Detektor Kemunculan Karakter</div>
+                <div class="det-detected-box">
+                    <div style="font-weight: 600; margin-bottom: 6px; color: #fff;">Terdeteksi di Bab Ini:</div>
+                    <div id="detected-tags-container">
+                        <span style="color: var(--text-muted); font-style: italic;">Belum ada karakter terdeteksi.</span>
+                    </div>
+                </div>
+
+                <div class="det-title">Status Target Bab Aktif</div>
+                <div id="active-target-card" style="background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 14px;">
+                    <!-- Active target details -->
+                </div>
+
+                <div class="det-title">Pedoman Validasi Format</div>
+                <div style="color: var(--text-muted); line-height: 1.6; font-size: 11px;">
+                    <p>• <strong>15 Paragraf:</strong> Setiap bab wajib dipisahkan dengan 1 baris kosong.</p>
+                    <p style="margin-top: 4px;">• <strong>10 Kalimat / Paragraf:</strong> Akhiri setiap kalimat dengan tanda titik (.), tanya (?), atau seru (!).</p>
+                    <p style="margin-top: 4px;">• <strong>Blok Eksplisit:</strong> Gunakan tag penanda berikut untuk mempermudah edit manual:</p>
+                    <pre style="background: #0b0e14; padding: 6px; border-radius: 4px; margin-top: 4px; font-size: 10px; color: var(--accent-gold);">&lt;!-- [BLOK EKSEKUSI EKSPLISIT: TARGET] --&gt;
+(Teks adegan)
+&lt;!-- [/BLOK EKSEKUSI EKSPLISIT] --&gt;</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LORE BASELINE -->
+    <div class="modal-overlay" id="lore-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>ARSIP MASTER WORLDBUILDING: PERADABAN VESPERAL</h2>
+                <button class="btn-close" onclick="closeLoreModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>1. KOSMOLOGI GALAKSI SEVEROZ & TIER 20</h3>
+                <p>Galaksi bola 3D (diameter 200 miliar tahun cahaya, ~2,42 x 10^30 bintang, jarak rata-rata 12 tahun cahaya). Peradaban Vesperal terkurung di satu tata surya tunggal (Sistem Aevora), non-FTL, kecepatan sub-c 0,02c - 0,08c. Mematuhi prinsip 100% materialis biologis, ECLSS 99,99%, dan Prinsip Anti-Jelaga di planet homeworld.</p>
+                
+                <h3>2. SISTEM BINTANG AEVORA (7 PLANET UTAMA)</h3>
+                <p>1. <strong>Kaelos (0,42 AU):</strong> Cermin foton tungku surya, relai daya gelombang mikro.<br>
+                2. <strong>Nyxara (0,88 AU):</strong> Tambang otomatis logam mulia platinum & iridium.<br>
+                3. <strong>VESPERIA (1,58 AU):</strong> Planet asal super-oseanik (74% laut alkali, 26% daratan marmer putih). Dikelilingi Cincin Solaria Prime (keliling 42.000 km, lebar 18 km, poros nol-G 3 km) dan 2 satelit: Caelina & Olyve-Minor.<br>
+                4. <strong>Zephyris (2,40 AU):</strong> Karst kapur, sanctum genomik kepadatan tulang & dermal.<br>
+                -- <strong>Sabuk Thalael (3,10 - 3,80 AU):</strong> Kota silinder Asteropolis, peleburan nikel-besi.<br>
+                5. <strong>Phaedron (5,20 AU):</strong> Raksasa gas toska, lumbung bahan bakar fusi D-He3.<br>
+                6. <strong>Vaelora (9,80 AU):</strong> Raksasa es bercincin, arena regata layar surya & dok sub-c.<br>
+                7. <strong>Solymar (16,40 AU):</strong> Katai beku terluar, observatorium pemantau batas kehampaan 12 tahun cahaya.</p>
+
+                <h3>3. STRUKTUR POPULASI & BIOLOGI</h3>
+                <p>Total Populasi: <strong>84.800.118.665 Jiwa</strong>. Postur atletis jangkung (183–210 cm) berkat terapi osteo-densitas kalsium tinggi, regulasi telomerase berkala mempertahankan usia biologis 25–30 tahun hingga usia kronologis 150–180 tahun standar.</p>
+
+                <h3>4. MEKANIKA SKENARIO 2: RAYMOND LACORDE</h3>
+                <p>Raymond Lacorde adalah subjek mutasi genomik galur murni Zephyris yang menyusup ke Solaria Prime. Dengan menyatukan raga bersama 75 wanita usia prima (23-37 tahun), ia menyerap biokunci otorisasi digital infrastruktur cincin serta memperkuat stamina dan feromon, hingga melucuti kekuasaan oligarki pria lama dan menjadi Raja Vesperia.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // EMBEDDED CHARACTERS (110 Characters Canon)
+        const CHARACTERS = [{"id": 1, "name": "Adrian Vaelis", "gender": "Pria", "age": 34, "height": 196, "role": "Kurator Utama Biosfer & Lanskap Kubah", "location": "Atrium Kubah Solaria Prime", "costume": "Tunik sutra biosintetis gading & celana linen-kristal abu-abu", "sector": "Biosfer & Lanskap"}, {"id": 2, "name": "Vivienne Solael", "gender": "Wanita", "age": 29, "height": 188, "role": "Pialang Alokasi Daya & Resor Nirbobot", "location": "Ring Mezzanine Calise-9", "costume": "Gaun liquid silk lavender mutiara punggung terbuka", "sector": "Bursa Kuota & Daya"}, {"id": 3, "name": "Julian Caelum", "gender": "Pria", "age": 38, "height": 202, "role": "Arsitek Kepadatan Tulang & Kontur Seluler", "location": "Klinik Estetika Elysium", "costume": "Mantel santai sutra arang semi-transparan", "sector": "Klinik & Rekayasa Genomik"}, {"id": 4, "name": "Serena Mireve", "gender": "Wanita", "age": 27, "height": 185, "role": "Perancang Spektrum Luminesensi & Akustik", "location": "Solarium Kaca Lumina", "costume": "Setelan dua potong linen-kristal putih berkilau", "sector": "Luminansi & Akustik"}, {"id": 5, "name": "Damon Valore", "gender": "Pria", "age": 42, "height": 194, "role": "Pengelola Dok Megapesiar & Salon Apung", "location": "Nadir Yacht Slip & Marina", "costume": "Jubah pendek satin polimer midnight blue terbuka", "sector": "Dok Megapesiar & Logistik"}, {"id": 6, "name": "Clara Nyxiel", "gender": "Wanita", "age": 31, "height": 187, "role": "Gastronom Molekuler Nektar Fusi", "location": "Penthouse Degustasi Verano", "costume": "Gaun draperi asimetris sutra tembaga mawar", "sector": "Gastronomi Molekuler"}, {"id": 7, "name": "Lucas Zephyre", "gender": "Pria", "age": 26, "height": 191, "role": "Instruktur Hidroterapi & Rekreasi Balistik", "location": "Laguna Sentrifugal Aethel", "costume": "Celana renang kompresi perak & kimono sutra es", "sector": "Hidroterapi & Poros 0-G"}, {"id": 8, "name": "Aria Lystra", "gender": "Wanita", "age": 33, "height": 190, "role": "Patron Busana Biosintetis & Galeri Tenun", "location": "Distrik Tekstil Marmer Putih", "costume": "Gaun membran polimer cair tembus pandang mikrokristal", "sector": "Adibusana Biosintetis"}, {"id": 9, "name": "Liam Thalael", "gender": "Pria", "age": 36, "height": 198, "role": "Inspektur Ozon & Suhu Termal", "location": "Cincin Zenith", "costume": "Busana sipil sutra/linen standar", "sector": "Cincin Zenith"}, {"id": 10, "name": "Chloe Cyrene", "gender": "Wanita", "age": 25, "height": 184, "role": "Pialang Tiket Resor Gravitasi Nol", "location": "Solarium Vaelis", "costume": "Busana sipil sutra/linen standar", "sector": "Solarium Vaelis"}, {"id": 11, "name": "Caleb Elysion", "gender": "Pria", "age": 30, "height": 193, "role": "Koreografer Tari Mikrogravitasi", "location": "Teater Kubah Sentral", "costume": "Busana sipil sutra/linen standar", "sector": "Teater Kubah Sentral"}, {"id": 12, "name": "Mia Vesperys", "gender": "Wanita", "age": 28, "height": 186, "role": "Konsultan Feromon Sintetis Nektar", "location": "Paviliun Bunga Nektar", "costume": "Busana sipil sutra/linen standar", "sector": "Paviliun Bunga Nektar"}, {"id": 13, "name": "Evan Solave", "gender": "Pria", "age": 35, "height": 195, "role": "Desainer Furnitur Polimer Aerogel", "location": "Studio Kaca Mireve", "costume": "Busana sipil sutra/linen standar", "sector": "Studio Kaca Mireve"}, {"id": 14, "name": "Stella Auriel", "gender": "Wanita", "age": 32, "height": 189, "role": "Manajer Jamuan Solarium Orbit", "location": "Menara Polaris", "costume": "Busana sipil sutra/linen standar", "sector": "Menara Polaris"}, {"id": 15, "name": "Mason Zavelis", "gender": "Pria", "age": 40, "height": 204, "role": "Kurator Anggur Ruang Angkasa", "location": "Gudang Sentrifugal", "costume": "Busana sipil sutra/linen standar", "sector": "Gudang Sentrifugal"}, {"id": 16, "name": "Lily Naeve", "gender": "Wanita", "age": 24, "height": 183, "role": "Resepsionis VIP Dok Megapesiar", "location": "Marina Valore", "costume": "Busana sipil sutra/linen standar", "sector": "Marina Valore"}, {"id": 17, "name": "Logan Caelis", "gender": "Pria", "age": 29, "height": 192, "role": "Fotografer Arsitektur Bersih", "location": "Atrium Marmer Putih", "costume": "Busana sipil sutra/linen standar", "sector": "Atrium Marmer Putih"}, {"id": 18, "name": "Ruby Phaedra", "gender": "Wanita", "age": 30, "height": 186, "role": "Desainer Perhiasan Filamen Murni", "location": "Arkade Kristal", "costume": "Busana sipil sutra/linen standar", "sector": "Arkade Kristal"}, {"id": 19, "name": "Adrian Vaneve", "gender": "Pria", "age": 45, "height": 197, "role": "Negosiator Kuota Radiasi Lunak", "location": "Dewan Energi Distrik", "costume": "Busana sipil sutra/linen standar", "sector": "Dewan Energi Distrik"}, {"id": 20, "name": "Zoe Lyssian", "gender": "Wanita", "age": 26, "height": 185, "role": "Terapis Relaksasi Frekuensi Rendah", "location": "Sanctum Tidur Senyap", "costume": "Busana sipil sutra/linen standar", "sector": "Sanctum Tidur Senyap"}, {"id": 21, "name": "Julian Sarelis", "gender": "Pria", "age": 33, "height": 190, "role": "Pengawas Sirkulasi Taman Gantung", "location": "Kubah Bioma Tropis", "costume": "Busana sipil sutra/linen standar", "sector": "Kubah Bioma Tropis"}, {"id": 22, "name": "Harper Olyve", "gender": "Wanita", "age": 35, "height": 191, "role": "Kolumnis Gaya Hidup Borjuasi", "location": "Majalah Vespera Luxe", "costume": "Busana sipil sutra/linen standar", "sector": "Majalah Vespera Luxe"}, {"id": 23, "name": "Damon Corael", "gender": "Pria", "age": 28, "height": 199, "role": "Pelatih Kebugaran Kinematik 1,2 G", "location": "Gelanggang Marmer", "costume": "Busana sipil sutra/linen standar", "sector": "Gelanggang Marmer"}, {"id": 24, "name": "Maya Selene", "gender": "Wanita", "age": 29, "height": 187, "role": "Penyelenggara Regata Skiff Surya", "location": "Marina Meridian", "costume": "Busana sipil sutra/linen standar", "sector": "Marina Meridian"}, {"id": 25, "name": "Caleb Thyrion", "gender": "Pria", "age": 37, "height": 196, "role": "Pialang Alokasi Air Kristalin", "location": "Konsorsium Hidrologi", "costume": "Busana sipil sutra/linen standar", "sector": "Konsorsium Hidrologi"}, {"id": 26, "name": "Vivienne Kaelis", "gender": "Wanita", "age": 41, "height": 188, "role": "Pemilik Kelab Eksklusif Ozone Noir", "location": "Puncak Barat Solaria", "costume": "Busana sipil sutra/linen standar", "sector": "Puncak Barat Solaria"}, {"id": 27, "name": "Lucas Mareve", "gender": "Pria", "age": 25, "height": 189, "role": "Sommelier Minuman Bertekanan", "location": "Lounge Zephyre", "costume": "Busana sipil sutra/linen standar", "sector": "Lounge Zephyre"}, {"id": 28, "name": "Clara Dione", "gender": "Wanita", "age": 34, "height": 186, "role": "Konsultan Pencahayaan Sirkadian", "location": "Biro Optik Dermal", "costume": "Busana sipil sutra/linen standar", "sector": "Biro Optik Dermal"}, {"id": 29, "name": "Liam Phaedron", "gender": "Pria", "age": 39, "height": 201, "role": "Arsitek Penthouse Kaca Lengkung", "location": "Biro Desain Ring-4", "costume": "Busana sipil sutra/linen standar", "sector": "Biro Desain Ring-4"}, {"id": 30, "name": "Aria Zephira", "gender": "Wanita", "age": 27, "height": 184, "role": "Model Sutra Biosintetis Transparan", "location": "Rumah Mode Lystra", "costume": "Busana sipil sutra/linen standar", "sector": "Rumah Mode Lystra"}, {"id": 31, "name": "Evan Voreve", "gender": "Pria", "age": 31, "height": 193, "role": "Analis Pertukaran Lisensi Kalori", "location": "Bursa Daya Sentral", "costume": "Busana sipil sutra/linen standar", "sector": "Bursa Daya Sentral"}, {"id": 32, "name": "Serena Calyve", "gender": "Wanita", "age": 36, "height": 192, "role": "Kurator Patung Marmer Sintetis", "location": "Promenade Budaya", "costume": "Busana sipil sutra/linen standar", "sector": "Promenade Budaya"}, {"id": 33, "name": "Mason Solael", "gender": "Pria", "age": 27, "height": 194, "role": "Navigator Pesiar Cincin Dalam", "location": "Marina Zenith", "costume": "Busana sipil sutra/linen standar", "sector": "Marina Zenith"}, {"id": 34, "name": "Chloe Maelis", "gender": "Wanita", "age": 23, "height": 183, "role": "Asisten Estetika Tekstur Kulit", "location": "Salon Lumina", "costume": "Busana sipil sutra/linen standar", "sector": "Salon Lumina"}, {"id": 35, "name": "Logan Ephyre", "gender": "Pria", "age": 34, "height": 197, "role": "Peneliti Botani Hibrida Tanpa Tanah", "location": "Lab Flora Orbital", "costume": "Busana sipil sutra/linen standar", "sector": "Lab Flora Orbital"}, {"id": 36, "name": "Mia Thyra", "gender": "Wanita", "age": 30, "height": 188, "role": "Koreografer Resepsi Nirbobot", "location": "Ruang Dansa Melayang", "costume": "Busana sipil sutra/linen standar", "sector": "Ruang Dansa Melayang"}, {"id": 37, "name": "Adrian Valys", "gender": "Pria", "age": 44, "height": 203, "role": "Kolektor Sketsa Era Pra-Orbital", "location": "Galeri Arsip Kering", "costume": "Busana sipil sutra/linen standar", "sector": "Galeri Arsip Kering"}, {"id": 38, "name": "Ruby Soreve", "gender": "Wanita", "age": 28, "height": 185, "role": "Desainer Gaun Memori-Bentuk Termal", "location": "Atrium Mode Sektor 3", "costume": "Busana sipil sutra/linen standar", "sector": "Atrium Mode Sektor 3"}, {"id": 39, "name": "Julian Olyss", "gender": "Pria", "age": 29, "height": 191, "role": "Teknisi Senyap Akustik Privat", "location": "Distrik Senyap", "costume": "Busana sipil sutra/linen standar", "sector": "Distrik Senyap"}, {"id": 40, "name": "Stella Naeve", "gender": "Wanita", "age": 37, "height": 190, "role": "Pengarah Protokol Tamu Resor", "location": "Paviliun Audiensi", "costume": "Busana sipil sutra/linen standar", "sector": "Paviliun Audiensi"}, {"id": 41, "name": "Damon Phaedris", "gender": "Pria", "age": 32, "height": 195, "role": "Pialang Hak Tambat Kapsul Orbit", "location": "Kantor Marina Luar", "costume": "Busana sipil sutra/linen standar", "sector": "Kantor Marina Luar"}, {"id": 42, "name": "Zoe Caelia", "gender": "Wanita", "age": 26, "height": 186, "role": "Terapis Sentuhan Dingin Seluler", "location": "Spa Pemulihan Sel", "costume": "Busana sipil sutra/linen standar", "sector": "Spa Pemulihan Sel"}, {"id": 43, "name": "Caleb Vaelion", "gender": "Pria", "age": 38, "height": 198, "role": "Penyelia Filtrasi Partikel Udara", "location": "Kontrol Atmosferik", "costume": "Busana sipil sutra/linen standar", "sector": "Kontrol Atmosferik"}, {"id": 44, "name": "Lily Sirene", "gender": "Wanita", "age": 31, "height": 187, "role": "Penyelaras Vokal Resonansi Hampa", "location": "Amphiteater Kubah", "costume": "Busana sipil sutra/linen standar", "sector": "Amphiteater Kubah"}, {"id": 45, "name": "Lucas Thaleve", "gender": "Pria", "age": 24, "height": 190, "role": "Penguji Ketahanan Linen-Kristal", "location": "Lab Tekstil Canggih", "costume": "Busana sipil sutra/linen standar", "sector": "Lab Tekstil Canggih"}, {"id": 46, "name": "Harper Mirelis", "gender": "Wanita", "age": 33, "height": 189, "role": "Pialang Alokasi Kalori Premium", "location": "Konsorsium Nutrisi", "costume": "Busana sipil sutra/linen standar", "sector": "Konsorsium Nutrisi"}, {"id": 47, "name": "Evan Caelor", "gender": "Pria", "age": 36, "height": 194, "role": "Pemilik Pemandian Garam Isotonik", "location": "Termal Cincin Bawah", "costume": "Busana sipil sutra/linen standar", "sector": "Termal Cincin Bawah"}, {"id": 48, "name": "Clara Solys", "gender": "Wanita", "age": 29, "height": 185, "role": "Desainer Gaun Koktail Sutra Ilusi", "location": "Butik L'Orbite", "costume": "Busana sipil sutra/linen standar", "sector": "Butik L'Orbite"}, {"id": 49, "name": "Liam Vesperan", "gender": "Pria", "age": 41, "height": 200, "role": "Kurator Flora Konservatori Bioma", "location": "Kubah Botani 2", "costume": "Busana sipil sutra/linen standar", "sector": "Kubah Botani 2"}, {"id": 50, "name": "Aria Phaene", "gender": "Wanita", "age": 25, "height": 184, "role": "Instruktur Meditasi Fajar Surya", "location": "Teras Fajar Vesper", "costume": "Busana sipil sutra/linen standar", "sector": "Teras Fajar Vesper"}, {"id": 51, "name": "Mason Mireve", "gender": "Pria", "age": 35, "height": 196, "role": "Arsitek Resor Apung Atmosferik", "location": "Studio Rekayasa", "costume": "Busana sipil sutra/linen standar", "sector": "Studio Rekayasa"}, {"id": 52, "name": "Mia Caelis", "gender": "Wanita", "age": 32, "height": 188, "role": "Pencicip Rasa Lipid Sintetis Murni", "location": "Lab Gastronomi", "costume": "Busana sipil sutra/linen standar", "sector": "Lab Gastronomi"}, {"id": 53, "name": "Logan Solave", "gender": "Pria", "age": 28, "height": 192, "role": "Penyedia Logistik Megapesiar", "location": "Dok Reaktor Fusi", "costume": "Busana sipil sutra/linen standar", "sector": "Dok Reaktor Fusi"}, {"id": 54, "name": "Stella Zephyris", "gender": "Wanita", "age": 39, "height": 191, "role": "Auditor Standar Kebersihan Udara", "location": "Dewan Sanitasi", "costume": "Busana sipil sutra/linen standar", "sector": "Dewan Sanitasi"}, {"id": 55, "name": "Adrian Thalael", "gender": "Pria", "age": 30, "height": 193, "role": "Desainer Pencahayaan Romantis", "location": "Studio Suasana", "costume": "Busana sipil sutra/linen standar", "sector": "Studio Suasana"}, {"id": 56, "name": "Chloe Solael", "gender": "Wanita", "age": 27, "height": 186, "role": "Pengelola Agenda Sosial Borjuasi", "location": "Biro Relasi Publik", "costume": "Busana sipil sutra/linen standar", "sector": "Biro Relasi Publik"}, {"id": 57, "name": "Julian Voreve", "gender": "Pria", "age": 33, "height": 197, "role": "Restorator Patung Logam Mulia", "location": "Preservasi Seni", "costume": "Busana sipil sutra/linen standar", "sector": "Preservasi Seni"}, {"id": 58, "name": "Ruby Lystra", "gender": "Wanita", "age": 34, "height": 187, "role": "Pialang Liburan Solarium Planet", "location": "Agen Ekskursi", "costume": "Busana sipil sutra/linen standar", "sector": "Agen Ekskursi"}, {"id": 59, "name": "Caleb Marelis", "gender": "Pria", "age": 26, "height": 191, "role": "Pilot Skiff Surya Balap Nirbobot", "location": "Sirkuit Terbuka", "costume": "Busana sipil sutra/linen standar", "sector": "Sirkuit Terbuka"}, {"id": 60, "name": "Vivienne Valore", "gender": "Wanita", "age": 38, "height": 190, "role": "Ketua Perkumpulan Salon Budaya", "location": "Balai Musyawarah", "costume": "Busana sipil sutra/linen standar", "sector": "Balai Musyawarah"}, {"id": 61, "name": "Elena Vaelis", "gender": "Wanita", "age": 28, "height": 187, "role": "Penyelaras Pola Tidur & Ritme Sirkadian", "location": "Sanctum Somnia Ring-3", "costume": "Rambut pirang pucat lurus terurai ke punggung, mata abu-abu", "sector": "Sanctum Somnia Ring-3"}, {"id": 62, "name": "Lyra Solael", "gender": "Wanita", "age": 25, "height": 184, "role": "Instruktur Dansa Sentrifugal Nirbobot", "location": "Studio Balet Apex", "costume": "Sangat lentur, paha dan betis kencang tanpa cela, mata biru", "sector": "Studio Balet Apex"}, {"id": 63, "name": "Camilla Caelum", "gender": "Wanita", "age": 32, "height": 192, "role": "Kurator Patung Kristal Polimer", "location": "Promenade Marmer Putih", "costume": "Postur regal menjulang, leher jenjang, rambut hitam bergelombang,", "sector": "Promenade Marmer Putih"}, {"id": 64, "name": "Daphne Mireve", "gender": "Wanita", "age": 30, "height": 189, "role": "Pialang Alokasi Emulsi Aroma Ozon", "location": "Bursa Flavour & Scent Lumina", "costume": "Kulit berkilau keemasan, tatapan menggoda, rambut cokelat ikal,", "sector": "Bursa Flavour & Scent Lumina"}, {"id": 65, "name": "Sienna Valore", "gender": "Wanita", "age": 35, "height": 195, "role": "Arsitek Dek Berjemur Radiasi Lunak", "location": "Solarium Puncak Helios", "costume": "Siluet jam pasir atletis, rambut tembaga kemerahan, mata amber.", "sector": "Solarium Puncak Helios"}, {"id": 66, "name": "Talia Nyxiel", "gender": "Wanita", "age": 27, "height": 186, "role": "Pencicip Ekstrak Bunga Terfusi", "location": "Salon Degustasi Nektar Elit", "costume": "Bibir penuh sensual, rahang lembut, mata cokelat madu. Gaun", "sector": "Salon Degustasi Nektar Elit"}, {"id": 67, "name": "Kira Zephyre", "gender": "Wanita", "age": 24, "height": 185, "role": "Pemandu Wisata Skiff Pribadi Cincin Luar", "location": "Dermaga Meridian", "costume": "Muda berani, otot perut ramping terdefinisi, rambut pirang", "sector": "Dermaga Meridian"}, {"id": 68, "name": "Giselle Lystra", "gender": "Wanita", "age": 31, "height": 191, "role": "Koreografer Peragaan Busana Polimer", "location": "Atrium Mode Zenith", "costume": "Langkah jenjang berwibawa, garis selangka menonjol, rambut", "sector": "Atrium Mode Zenith"}, {"id": 69, "name": "Amara Thalael", "gender": "Wanita", "age": 29, "height": 188, "role": "Spesialis Hidroterapi Garam Nir-Radiasi", "location": "Pemandian Caelis", "costume": "Kulit putih porselen bercahaya basah, mata hijau lumut.", "sector": "Pemandian Caelis"}, {"id": 70, "name": "Nadia Cyrene", "gender": "Wanita", "age": 26, "height": 183, "role": "Pialang Paviliun Musik Hampa Udara", "location": "Amphiteater Resonansi", "costume": "Tungkai ramping kencang, tulang pipi halus, mata safir jernih.", "sector": "Amphiteater Resonansi"}, {"id": 71, "name": "Isla Elysion", "gender": "Wanita", "age": 33, "height": 190, "role": "Restorator Lukisan Pigmen Organik", "location": "Konservatori Seni", "costume": "Jemari lentik ekspresif, ekspresi hangat puitis, rambut gelap.", "sector": "Konservatori Seni"}, {"id": 72, "name": "Celeste Vesperys", "gender": "Wanita", "age": 36, "height": 194, "role": "Konsultan Karisma & Etiket Salon Elit", "location": "Klub Eksekutif Valys", "costume": "Aura dominan memikat, postur tinggi kokoh, rambut perak tebal.", "sector": "Klub Eksekutif Valys"}, {"id": 73, "name": "Freya Solave", "gender": "Wanita", "age": 28, "height": 187, "role": "Peneliti Bunga Nirbobot Aromatik", "location": "Lab Flora Kubah Bunga", "costume": "Hidung mancung halus, pipi merona alami, rambut pirang kemerahan.", "sector": "Lab Flora Kubah Bunga"}, {"id": 74, "name": "Bianca Auriel", "gender": "Wanita", "age": 34, "height": 193, "role": "Pengatur Suhu & Kelembapan Kabin Privat", "location": "Biro Atmosferik Elit", "costume": "Tulang selangka tegas menawan, sorot mata tenang, rambut pirang.", "sector": "Biro Atmosferik Elit"}, {"id": 75, "name": "Lucia Zavelis", "gender": "Wanita", "age": 27, "height": 186, "role": "Desainer Meja Perjamuan Marmer Melayang", "location": "Atelier Interior Elysian", "costume": "Siluet ramping geometris, bibir tipis menawan, rambut hitam pendek.", "sector": "Atelier Interior Elysian"}, {"id": 76, "name": "Sabrina Naeve", "gender": "Wanita", "age": 23, "height": 183, "role": "Resepsionis VIP Dok Skiff Surya", "location": "Marina Sayap Barat", "costume": "Senyum magnetik ceria, kulit mulus berseri, mata biru muda jernih.", "sector": "Marina Sayap Barat"}, {"id": 77, "name": "Thalia Caelis", "gender": "Wanita", "age": 30, "height": 189, "role": "Instruktur Aerobik Dinamika Fluida", "location": "Pusat Kebugaran Sentrifugal", "costume": "Otot perut terpahat nyata, lengan kencang lentur, rambut kepang.", "sector": "Pusat Kebugaran Sentrifugal"}, {"id": 78, "name": "Ophelia Phaedra", "gender": "Wanita", "age": 37, "height": 196, "role": "Pialang Permata Sintetis Fusi Karbon", "location": "Bursa Kristal Solaria", "costume": "Tatapan dingin berwibawa, leher sangat jenjang, rambut perak rapi.", "sector": "Bursa Kristal Solaria"}, {"id": 79, "name": "Kallista Vaneve", "gender": "Wanita", "age": 32, "height": 191, "role": "Notaris Kontrak Alokasi Energi Rekreasi", "location": "Biro Lisensi Distrik", "costume": "Elegan berjarak, rahang proporsional tegas, rambut pirang digulung.", "sector": "Biro Lisensi Distrik"}, {"id": 80, "name": "Eleni Lyssian", "gender": "Wanita", "age": 25, "height": 184, "role": "Musisi Harpa Akustik Resonansi", "location": "Paviliun Senja Planet Induk", "costume": "Romantis melankolis, kulit porselen tipis, rambut ikal pirang.", "sector": "Paviliun Senja Planet Induk"}, {"id": 81, "name": "Aurelia Sarelis", "gender": "Wanita", "age": 29, "height": 188, "role": "Pengelola Rumah Anggrek Aeroponik", "location": "Konservatori Tropis", "costume": "Aroma tubuh harum nektar segar, bibir merekah, rambut cokelat tua.", "sector": "Konservatori Tropis"}, {"id": 82, "name": "Cassandra Olyve", "gender": "Wanita", "age": 35, "height": 192, "role": "Kolumnis Romansa & Skandal Borjuasi", "location": "Redaksi Orbit Glamour", "costume": "Sorot mata licik menggoda, pinggul sensual, rambut pirang madu.", "sector": "Redaksi Orbit Glamour"}, {"id": 83, "name": "Leona Corael", "gender": "Wanita", "age": 28, "height": 190, "role": "Terapis Pijat Tekanan Hidrolik Hangat", "location": "Sanctum Termal", "costume": "Bahu bidang kencang, telapak tangan lembut bertenaga, rambut cepol.", "sector": "Sanctum Termal"}, {"id": 84, "name": "Selene Mareve", "gender": "Wanita", "age": 31, "height": 187, "role": "Penyelia Koktail Matahari Terbit", "location": "Dek Observasi Fajar", "costume": "Bibir penuh sensual, senyum memikat, rambut merah keemasan panjang.", "sector": "Dek Observasi Fajar"}, {"id": 85, "name": "Delphine Thyrion", "gender": "Wanita", "age": 38, "height": 197, "role": "Pialang Alokasi Kolam Oksigen Murni", "location": "Konsorsium Spa Regeneratif", "costume": "Postur ningrat menjulang, tatapan penuh wibawa, rambut perak ikal.", "sector": "Konsorsium Spa Regeneratif"}, {"id": 86, "name": "Myra Kaelis", "gender": "Wanita", "age": 26, "height": 185, "role": "Terapis Kilau Dermal & Eksfoliasi Kristal", "location": "Klinik Dermal Aethel", "costume": "Kulit super mulus sehalus satin, rambut pirang abu-abu sebahu.", "sector": "Klinik Dermal Aethel"}, {"id": 87, "name": "Iris Mareve", "gender": "Wanita", "age": 24, "height": 184, "role": "Pemandu Berenang Nir-Gravitasi", "location": "Akuarium Terapung Zenith", "costume": "Atletis lincah, pinggang ramping, rambut hitam dipotong pendek.", "sector": "Akuarium Terapung Zenith"}, {"id": 88, "name": "Rowena Dione", "gender": "Wanita", "age": 33, "height": 190, "role": "Perancang Spektrum Cahaya Kamar Tidur", "location": "Konsultan Luminansi", "costume": "Pembawaan sensual santai, rambut cokelat lurus halus. Gaun tidur", "sector": "Konsultan Luminansi"}, {"id": 89, "name": "Thea Phaedron", "gender": "Wanita", "age": 29, "height": 188, "role": "Desainer Balkon Kaca Polimer Lengkung", "location": "Studio Arsitektur Solaria", "costume": "Modern chic, garis leher terdefinisi indah, rambut pirang berombak.", "sector": "Studio Arsitektur Solaria"}, {"id": 90, "name": "Larissa Zephira", "gender": "Wanita", "age": 27, "height": 186, "role": "Model Eksklusif Gaun Memori-Bentuk", "location": "Rumah Mode Haute Vespera", "costume": "Lekuk tubuh sangat tegas, tulang pipi tinggi, rambut perak lurus.", "sector": "Rumah Mode Haute Vespera"}, {"id": 91, "name": "Evelyn Voreve", "gender": "Wanita", "age": 34, "height": 193, "role": "Analis Kuota Nutrisi Asam Amino Murni", "location": "Lembaga Pangan Terkultur", "costume": "Postur tegak sempurna, rambut cokelat tua terawat. Gaun leher halter", "sector": "Lembaga Pangan Terkultur"}, {"id": 92, "name": "Cosima Calyve", "gender": "Wanita", "age": 30, "height": 189, "role": "Pematung Relief Tubuh Marmer Sintetis", "location": "Atelier Seni Plastik Orbit", "costume": "Berjiwa seni bebas, lengan ramping berotot, rambut hitam ikal acak.", "sector": "Atelier Seni Plastik Orbit"}, {"id": 93, "name": "Althea Solael", "gender": "Wanita", "age": 25, "height": 185, "role": "Operator Navigasi Pesiar Santai Pribadi", "location": "Dok Sayap Timur", "costume": "Ceria berani, kulit berseri kemerahan, rambut pirang berombak.", "sector": "Dok Sayap Timur"}, {"id": 94, "name": "Nerida Maelis", "gender": "Wanita", "age": 28, "height": 187, "role": "Terapis Perendaman Gel Dingin Revitalisasi", "location": "Oasis Kriogenik 4", "costume": "Mata hijau zamrud dingin memikat, kulit pucat bersih kemerahan.", "sector": "Oasis Kriogenik 4"}, {"id": 95, "name": "Vespera Ephyre", "gender": "Wanita", "age": 32, "height": 191, "role": "Kurator Koleksi Bunga Nokturnal", "location": "Taman Nokturnal Solaria", "costume": "Misterius anggun, rambut hitam legam panjang terurai lebat.", "sector": "Taman Nokturnal Solaria"}, {"id": 96, "name": "Calliope Thyra", "gender": "Wanita", "age": 26, "height": 186, "role": "Pelatih Vokal Paduan Suara Kubah", "location": "Auditorium Suara Kristal", "costume": "Leher jenjang tegak, bibir merekah sensual, rambut ikal tembaga.", "sector": "Auditorium Suara Kristal"}, {"id": 97, "name": "Kendra Valys", "gender": "Wanita", "age": 39, "height": 198, "role": "Kurator Perhiasan Antik Era Pra-Orbital", "location": "Galeri Warisan Budaya", "costume": "Borjuasi matang berkuasa, aura tak terbantahkan, rambut bergelombang.", "sector": "Galeri Warisan Budaya"}, {"id": 98, "name": "Livia Soreve", "gender": "Wanita", "age": 27, "height": 185, "role": "Perancang Gaun Renang Polimer Mengapung", "location": "Butik Laguna Aethel", "costume": "Menggoda ekspresif, kulit eksotis merona, mata cokelat berkilau.", "sector": "Butik Laguna Aethel"}, {"id": 99, "name": "Juno Olyss", "gender": "Wanita", "age": 31, "height": 189, "role": "Auditor Ketenangan & Senyap Akustik", "location": "Inspektorat Suasana Damai", "costume": "Pembawaan senyap menenangkan, tatapan analitis tajam, rambut rapi.", "sector": "Inspektorat Suasana Damai"}, {"id": 100, "name": "Diana Naeve", "gender": "Wanita", "age": 36, "height": 194, "role": "Pengatur Jamuan Teh Nektar & Diplomasi Tamu", "location": "Paviliun Resepsi 1", "costume": "Anggun tanpa cela, senyum manis penuh rahasia, rambut disanggul.", "sector": "Paviliun Resepsi 1"}, {"id": 101, "name": "Mireille Phaedris", "gender": "Wanita", "age": 28, "height": 188, "role": "Pialang Alokasi Tambat Kapsul Surya", "location": "Kantor Registrasi Marina", "costume": "Profesional sensual, sorot mata penuh kalkulasi, rambut rapi.", "sector": "Kantor Registrasi Marina"}, {"id": 102, "name": "Alisa Caelia", "gender": "Wanita", "age": 24, "height": 183, "role": "Terapis Mist Uap Kaya Magnesium", "location": "Kamar Uap Solarium Selatan", "costume": "Kulit kemerahan sehat berkilau uap, mata ramah, rambut basah.", "sector": "Kamar Uap Solarium Selatan"}, {"id": 103, "name": "Hestia Vaelion", "gender": "Wanita", "age": 37, "height": 195, "role": "Inspektur Kejernihan Air Kolam Rekreasi", "location": "Dewan Sanitasi Elit", "costume": "Tegas percaya diri, tubuh atletis tegap, rambut dikuncir kuda.", "sector": "Dewan Sanitasi Elit"}, {"id": 104, "name": "Melody Sirene", "gender": "Wanita", "age": 25, "height": 185, "role": "Penyanyi Solois Frekuensi Rendah", "location": "Klub Musik Hampa Suara", "costume": "Sangat karismatik, tulang selangka menonjol indah, rambut pirang.", "sector": "Klub Musik Hampa Suara"}, {"id": 105, "name": "Saskia Thaleve", "gender": "Wanita", "age": 30, "height": 190, "role": "Pengembang Tekstil Membran Sejuk", "location": "Lab Desain Serat Mikro", "costume": "Ramping atletis, rambut perak pixie, tatapan fokus cerdas.", "sector": "Lab Desain Serat Mikro"}, {"id": 106, "name": "Valencia Mirelis", "gender": "Wanita", "age": 33, "height": 192, "role": "Pialang Makanan Manis Emulsi Lipid Emas", "location": "Salon Manis Zenith", "costume": "Menggoda selera sensorik, tubuh sintal berisi, rambut madu.", "sector": "Salon Manis Zenith"}, {"id": 107, "name": "Cora Caelor", "gender": "Wanita", "age": 29, "height": 187, "role": "Penjaga Paviliun Pasir Kuarsa Hangat", "location": "Resor Termal Selatan", "costume": "Santai eksotis, kulit sawo bersinar, rambut hitam berombak.", "sector": "Resor Termal Selatan"}, {"id": 108, "name": "Nerina Solys", "gender": "Wanita", "age": 26, "height": 184, "role": "Desainer Gaun Sutra Ilusi Transparan", "location": "Atelier Mode L'Orbite", "costume": "Berani provokatif, pinggang ramping terdefinisi, rambut sebahu.", "sector": "Atelier Mode L'Orbite"}, {"id": 109, "name": "Evadne Vesperan", "gender": "Wanita", "age": 35, "height": 193, "role": "Konservator Anggrek Udara Langka", "location": "Taman Melayang Sayap Barat", "costume": "Tenang memikat, sorot mata hijau teduh, rambut berombak terurai.", "sector": "Taman Melayang Sayap Barat"}, {"id": 110, "name": "Phoebe Phaene", "gender": "Wanita", "age": 27, "height": 186, "role": "Instruktur Pernapasan Oksigen Murni", "location": "Teras Yoga Fajar Kubah 5", "costume": "Fleksibel anggun, otot inti ramping kencang, rambut kepang longgar.", "sector": "Teras Yoga Fajar Kubah 5"}];
+
+        // Senior Matriarchs (Excluded from physical conquest)
+        const SENIOR_IDS = [26, 54, 60, 85, 97];
+        
+        // Target sequence for first 10
+        const FIRST_10_TARGETS = [76, 16, 34, 87, 102, 67, 10, 50, 80, 30];
+
+        // App State
+        let appState = {
+            currentChapter: 1,
+            activeFilter: 'all',
+            chapters: {},
+            characterStats: {}, // { [id]: { appearances: 0, conquered: false } }
+            conqueredCount: 0
+        };
+
+        // Initialize state
+        function initApp() {
+            // Populate chapters select
+            const sel = document.getElementById('chapter-select');
+            for(let i=1; i<=200; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Bab ${i}`;
+                sel.appendChild(opt);
+            }
+
+            // Init character stats
+            CHARACTERS.forEach(c => {
+                const isSenior = SENIOR_IDS.includes(c.id);
+                const isMale = c.gender === 'Pria';
+                const isTarget = (!isSenior && !isMale);
+                appState.characterStats[c.id] = {
+                    appearances: 0,
+                    isTarget: isTarget,
+                    isSenior: isSenior,
+                    isMale: isMale,
+                    conquered: false
+                };
+            });
+
+            // Load LocalStorage
+            loadStateFromStorage();
+
+            renderCharList();
+            loadChapter(appState.currentChapter);
+            updateGlobalStats();
+        }
+
+        function filterTab(type) {
+            appState.activeFilter = type;
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            renderCharList();
+        }
+
+        function renderCharList() {
+            const query = document.getElementById('char-search-input').value.toLowerCase();
+            const container = document.getElementById('character-roster');
+            container.innerHTML = '';
+
+            const list = CHARACTERS.filter(c => {
+                const stat = appState.characterStats[c.id];
+                if(appState.activeFilter === 'target' && !stat.isTarget) return false;
+                if(appState.activeFilter === 'senior' && !stat.isSenior) return false;
+                if(appState.activeFilter === 'pria' && !stat.isMale) return false;
+                if(query) {
+                    const matchName = c.name.toLowerCase().includes(query);
+                    const matchRole = c.role.toLowerCase().includes(query);
+                    const matchLoc = c.location.toLowerCase().includes(query);
+                    return matchName || matchRole || matchLoc;
+                }
+                return true;
+            });
+
+            list.forEach(c => {
+                const stat = appState.characterStats[c.id];
+                const card = document.createElement('div');
+                card.className = `char-card ${stat.isTarget ? 'target-active' : ''} ${stat.conquered ? 'conquered' : ''} ${stat.isSenior ? 'senior' : ''} ${stat.isMale ? 'male' : ''}`;
+                
+                let badgeClass = 'badge-target';
+                let badgeText = 'Target Biokunci';
+                if(stat.isMale) { badgeClass = 'badge-male'; badgeText = 'Pria / Non-Target'; }
+                else if(stat.isSenior) { badgeClass = 'badge-senior'; badgeText = 'Matriark Senior'; }
+                else if(stat.conquered) { badgeClass = 'badge-done'; badgeText = 'Disatukan ✓'; }
+
+                card.innerHTML = `
+                    <div class="char-name">
+                        <span>#${c.id} ${c.name}</span>
+                        <span class="char-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="char-meta">${c.age} th • ${c.height} cm • ${c.gender}</div>
+                    <div class="char-meta" style="color:#cbd5e1; margin-top:2px;">${c.role}</div>
+                    <div class="char-meta" style="color:var(--accent-gold); font-size:10px;">📍 ${c.location}</div>
+                    <div class="char-appear">Kemunculan: ${stat.appearances} bab</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function loadChapter(num) {
+            appState.currentChapter = parseInt(num);
+            document.getElementById('chapter-select').value = appState.currentChapter;
+            
+            const chap = appState.chapters[appState.currentChapter] || {
+                title: `Bab ${appState.currentChapter}: Langkah Penaklukan Cincin`,
+                content: ''
+            };
+
+            document.getElementById('chapter-title').value = chap.title;
+            document.getElementById('editor').value = chap.content;
+
+            validateTextFormat(chap.content);
+            detectCharactersInText(chap.content);
+            updateActiveTargetCard();
+        }
+
+        function changeChapter(val) {
+            saveCurrentDraft();
+            loadChapter(val);
+        }
+
+        function updateChapterMeta() {
+            if(!appState.chapters[appState.currentChapter]) {
+                appState.chapters[appState.currentChapter] = { title: '', content: '' };
+            }
+            appState.chapters[appState.currentChapter].title = document.getElementById('chapter-title').value;
+        }
+
+        function onEditorInput() {
+            const text = document.getElementById('editor').value;
+            validateTextFormat(text);
+            detectCharactersInText(text);
+        }
+
+        function validateTextFormat(text) {
+            if(!text.trim()) {
+                document.getElementById('badge-paragraphs').textContent = 'Paragraf: 0 / 15';
+                document.getElementById('badge-paragraphs').className = 'v-badge';
+                document.getElementById('badge-sentences').textContent = 'Kalimat/P: 0';
+                document.getElementById('badge-sentences').className = 'v-badge';
+                document.getElementById('badge-words').textContent = 'Total Kata: 0';
+                return;
+            }
+
+            // Split paragraphs by 2 or more newlines
+            const paragraphs = text.trim().split(/\n\s*\n+/).filter(p => p.trim().length > 0);
+            const pCount = paragraphs.length;
+
+            const pBadge = document.getElementById('badge-paragraphs');
+            pBadge.textContent = `Paragraf: ${pCount} / 15`;
+            pBadge.className = `v-badge ${pCount === 15 ? 'ok' : 'error'}`;
+
+            // Check sentences in each paragraph
+            let all10 = true;
+            let sentenceStats = [];
+            paragraphs.forEach((p, idx) => {
+                // sentence split roughly by punctuation followed by space or end
+                const cleanP = p.replace(/<!--.*?-->/gs, ''); // exclude HTML tags
+                const sentences = cleanP.split(/[.!?]+(?:\s+|$)/).filter(s => s.trim().length > 3);
+                sentenceStats.push(sentences.length);
+                if(sentences.length !== 10) all10 = false;
+            });
+
+            const sBadge = document.getElementById('badge-sentences');
+            sBadge.textContent = all10 ? 'Kalimat/P: 10/10 ✓' : `Kalimat/P: Variatif (${sentenceStats.slice(0,3).join(',')})`;
+            sBadge.className = `v-badge ${all10 && pCount === 15 ? 'ok' : 'error'}`;
+
+            const words = text.trim().split(/\s+/).length;
+            document.getElementById('badge-words').textContent = `Total Kata: ${words}`;
+        }
+
+        function detectCharactersInText(text) {
+            const detected = [];
+            CHARACTERS.forEach(c => {
+                // Case-insensitive search of character name
+                const regex = new RegExp('\\b' + c.name + '\\b', 'i');
+                if(regex.test(text)) {
+                    detected.push(c);
+                }
+            });
+
+            const container = document.getElementById('detected-tags-container');
+            container.innerHTML = '';
+            if(detected.length === 0) {
+                container.innerHTML = '<span style="color: var(--text-muted); font-style: italic;">Belum ada karakter terdeteksi.</span>';
+            } else {
+                detected.forEach(c => {
+                    const stat = appState.characterStats[c.id];
+                    const tag = document.createElement('span');
+                    tag.className = `detected-tag ${stat.isTarget ? 'target' : ''}`;
+                    tag.textContent = c.name;
+                    container.appendChild(tag);
+                });
+            }
+
+            // Update stats
+            recalculateGlobalAppearances();
+        }
+
+        function recalculateGlobalAppearances() {
+            // Reset
+            CHARACTERS.forEach(c => {
+                appState.characterStats[c.id].appearances = 0;
+            });
+
+            // Count per chapter
+            let activeSet = new Set();
+            Object.values(appState.chapters).forEach(chap => {
+                if(!chap.content) return;
+                CHARACTERS.forEach(c => {
+                    const regex = new RegExp('\\b' + c.name + '\\b', 'i');
+                    if(regex.test(chap.content)) {
+                        appState.characterStats[c.id].appearances++;
+                        activeSet.add(c.id);
+                        // Check if explicit conquest happened in text
+                        if(appState.characterStats[c.id].isTarget && (chap.content.includes(`TARGET #${c.id}`) || chap.content.includes(`TARGET #${c.name}`))) {
+                            appState.characterStats[c.id].conquered = true;
+                        }
+                    }
+                });
+            });
+
+            document.getElementById('stat-active-chars').textContent = `${activeSet.size} / 110`;
+
+            // Count conquered targets
+            let conquered = 0;
+            Object.values(appState.characterStats).forEach(s => {
+                if(s.isTarget && s.conquered) conquered++;
+            });
+            appState.conqueredCount = conquered;
+
+            updateGlobalStats();
+            renderCharList();
+        }
+
+        function updateGlobalStats() {
+            document.getElementById('stat-biokeys').textContent = `${appState.conqueredCount} / 75`;
+            const pct = ((appState.conqueredCount / 75) * 100).toFixed(1);
+            document.getElementById('stat-percent').textContent = `${pct}%`;
+            document.getElementById('biokey-progress').style.width = `${pct}%`;
+        }
+
+        function updateActiveTargetCard() {
+            const chapNum = appState.currentChapter;
+            let targetChar = null;
+            
+            // Map chapter to target (e.g. Bab 1-2: Target 1 Sabrina Naeve #76)
+            if(chapNum <= 2) targetChar = CHARACTERS.find(c => c.id === 76);
+            else if(chapNum <= 4) targetChar = CHARACTERS.find(c => c.id === 16);
+            else if(chapNum <= 7) targetChar = CHARACTERS.find(c => c.id === 34);
+            else if(chapNum <= 10) targetChar = CHARACTERS.find(c => c.id === 87);
+            else if(chapNum <= 12) targetChar = CHARACTERS.find(c => c.id === 102);
+            else if(chapNum <= 15) targetChar = CHARACTERS.find(c => c.id === 67);
+            else if(chapNum <= 17) targetChar = CHARACTERS.find(c => c.id === 10);
+            else if(chapNum <= 19) targetChar = CHARACTERS.find(c => c.id === 50);
+            else if(chapNum <= 21) targetChar = CHARACTERS.find(c => c.id === 80);
+            else if(chapNum <= 24) targetChar = CHARACTERS.find(c => c.id === 30);
+
+            const card = document.getElementById('active-target-card');
+            if(targetChar) {
+                card.innerHTML = `
+                    <div style="font-weight:700; color:var(--accent-rose); font-size:13px;">#${targetChar.id} ${targetChar.name}</div>
+                    <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">${targetChar.role}</div>
+                    <div style="font-size:11px; color:var(--accent-gold); margin-top:2px;">📍 ${targetChar.location}</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${targetChar.age} tahun • ${targetChar.height} cm</div>
+                    <div style="margin-top:6px; font-size:11px; color:#e2e8f0; font-style:italic;">"${targetChar.costume}"</div>
+                `;
+            } else {
+                card.innerHTML = `<span style="color:var(--text-muted); font-style:italic;">Target untuk Bab ${chapNum} sedang dalam rotasi fase narasi lanjutan.</span>`;
+            }
+        }
+
+        function highlightExplicitBlocks() {
+            const ed = document.getElementById('editor');
+            const val = ed.value;
+            if(!val.includes('<!-- [BLOK EKSEKUSI EKSPLISIT')) {
+                alert('Tidak ditemukan tag <!-- [BLOK EKSEKUSI EKSPLISIT] --> di bab ini.');
+                return;
+            }
+            alert('Tag Blok Eksplisit ditemukan! Anda dapat langsung menyunting detail fisik di antara tag tersebut.');
+        }
+
+        // ONE-CLICK CHAPTER GENERATOR (15 Paragraphs x 10 Sentences)
+        function generateChapterOneClick() {
+            const chapNum = appState.currentChapter;
+            let targetChar = CHARACTERS.find(c => c.id === 76); // default Sabrina
+            if(chapNum === 2) targetChar = CHARACTERS.find(c => c.id === 76);
+            else if(chapNum >= 3 && chapNum <= 5) targetChar = CHARACTERS.find(c => c.id === 16);
+            else if(chapNum >= 6 && chapNum <= 8) targetChar = CHARACTERS.find(c => c.id === 34);
+
+            let paragraphs = [];
+            
+            // Generate exactly 15 paragraphs with 10 sentences each
+            for(let p = 1; p <= 15; p++) {
+                let sentences = [];
+                if(p === 1) {
+                    sentences = [
+                        `Cahaya putih-hangat dari bintang Aevora Prime membiaskan kemurnian foton di sepanjang lengkungan kaca akrilik Marina Sayap Barat Cincin Solaria Prime.`,
+                        `Raymond Lacorde melangkah tenang di atas ubin marmer kristal yang dingin, merasakan getaran halus turbin sentrifugal yang mempertahankan gravitasi buatan satu koma nol gravitasi standar.`,
+                        `Udara di koridor transit ini berhembus sejuk pada suhu presisi dua puluh dua derajat Celsius, disaring secara mutlak tanpa menyisakan partikel jelaga industri sedikit pun.`,
+                        `Di balik jubah tenun linen gelap yang menutupi bahu lebarnya, sirkulasi darah Raymond berdenyut stabil membawa galur genomik tersembunyi dari sanctum Zephyris.`,
+                        `Pandangan matanya yang tajam mengamati barisan megapesiar sub-c yang tertambat rapi di dok gravitasi rendah di balik dinding kaca lengkung.`,
+                        `Peradaban Vesperal telah lama terlena dalam kenyamanan daur ulang tertutup sembilan puluh sembilan koma sembilan puluh sembilan persen yang meninabobokan miliaran jiwa.`,
+                        `Setiap desimal daya dan hak tambat di marina ini dikunci rapat oleh otentikasi biometrik yang hanya bisa diakses oleh segelintir kaum borjuasi terpilih.`,
+                        `Namun, bagi Raymond, keteraturan sistemik ini adalah dinding pertahanan rapuh yang siap diruntuhkan dari titik paling intim.`,
+                        `Langkah kakinya membimbingnya mendekati gerbang kaca resepsi VIP, tempat target pertamanya sedang bertugas mengawasi terminal sandar.`,
+                        `Infiltrasi senyap menuju puncak kekuasaan peradaban Vesperia resmi dimulai pada rotasi hari ini.`
+                    ];
+                } else if(p === 5) {
+                    sentences = [
+                        `Sabrina Naeve berdiri tegak di balik meja resepsi marmer melayang, memancarkan pesona muda seorang wanita berusia dua puluh tiga tahun yang memegang kendali registrasi VIP.`,
+                        `Rok span sutra perak berbelahan tinggi yang dikenakannya memeluk pinggulnya dengan ketat, dipadu atasan linen tanpa lengan tembus pandang yang menonjolkan keanggunan garis lehernya.`,
+                        `Mata biru mudanya yang jernih menyipit sesaat ketika sosok Raymond yang menjulang tinggi mendekat ke arah konsol kendalinya.`,
+                        `Ada daya tarik kimiawi tak lazim yang tiba-tiba merayapi atmosfer steril di sekitar meja resepsi saat pria itu menghentikan langkahnya.`,
+                        `Sabrina mencoba mempertahankan senyum profesionalnya yang biasa ia tunjukkan kepada para pemilik megapesiar dari kalangan keluarga Valore.`,
+                        `"Selamat datang di gerbang Marina Sayap Barat, ada otorisasi sandar yang bisa saya verifikasi untuk kapsul Anda?" sapanya dengan intonasi suara manis yang tertata rapi.`,
+                        `Raymond tidak segera menyodorkan dokumen digital, melainkan menatap langsung ke dalam manik mata Sabrina dengan ketenangan yang menghanyutkan.`,
+                        `Feromon sintetis alami yang terpancar dari pori-pori kulit Raymond mulai mempengaruhi reseptor saraf penciuman sang resepsionis muda.`,
+                        `Sabrina merasakan detak jantungnya berdegup lebih cepat, sebuah reaksi fisiologis yang belum pernah ia rasakan selama bertugas di dok ini.`,
+                        `Jari-jemari wanita itu sedikit bergetar di atas panel kristal sentuh saat ia menunggu jawaban dari tamunya.`
+                    ];
+                } else if(p === 10) {
+                    sentences = [
+                        `Pintu kompartemen VIP tertutup rapat di balik desis hidrolik kedap suara, mengisolasi mereka sepenuhnya dari hiruk-pikuk dermaga marina luar.`,
+                        `Sabrina bersandar pasrah pada tepi meja konsol marmer, napasnya memburu halus saat pesona biologis Raymond meruntuhkan sisa batasan formalitasnya.`,
+                        `Jemari kokoh Raymond perlahan menyentuh pundak halus Sabrina, menuntun wanita muda itu ke dalam pelukan yang menuntut penyerahan raga seutuhnya.`,
+                        `<!-- [BLOK EKSEKUSI EKSPLISIT: TARGET #${targetChar.id} ${targetChar.name}] -->`,
+                        `Sabrina menarik napas tajam ketika kehangatan tubuh Raymond menyatu dengan raganya, memicu gelombang pelepasan endorfin masif yang mengalir deras di setiap jaringan saraf dermal.`,
+                        `Sentuhan intim yang berirama intens di atas marmer putih dingin itu menyatukan frekuensi biologis mereka tanpa menyisakan ruang keraguan bagi sang resepsionis.`,
+                        `Setiap desah napas yang terlepas di udara bersuhu dua puluh dua derajat menjadi saksi penyerahan mutlak Sabrina di bawah dominasi fisik yang tak tertahankan.`,
+                        `Pertukaran fluida biologis memicu proses asimilasi genomik seketika, mengikat sistem neuro-hormonal wanita itu ke dalam kepatuhan mutlak pada kehendak sang penakluk.`,
+                        `<!-- [/BLOK EKSEKUSI EKSPLISIT - SILAKAN PERDALAM DETAIL FISIK SECARA MANUAL DI SINI] -->`,
+                        `Ketika getaran penyatuan itu perlahan mereda, sepasang mata Sabrina menatap Raymond dengan binar kekaguman dan pengabdian jiwa yang tak terbantahkan.`
+                    ];
+                } else if(p === 15) {
+                    sentences = [
+                        `Cahaya Aevora Prime menembus kaca kubah saat siklus fajar baru mulai menerangi permukaan laut super-oseanik Vesperia di bawah cincin.`,
+                        `Raymond merapikan pakaian sutranya, melangkah keluar dari kabin VIP dengan langkah tegap yang dipenuhi lonjakan vitalitas seluler baru.`,
+                        `Di belakangnya, Sabrina Naeve tersenyum takzim, telah menyerahkan seluruh biokunci akses gerbang marina tanpa menyisakan keraguan sedikit pun.`,
+                        `Panel telemetri di pergelangan tangan Raymond berkedip lembut, menampilkan kode enkripsi pertama yang kini resmi berada di bawah kendalinya.`,
+                        `Satu demi satu simpul kekuasaan kaum borjuasi Solaria Prime akan ia masuki melalui pintu ranjang yang tak pernah mereka curigai.`,
+                        `Adrian Vaelis dan Damon Valore masih tertidur di penthouse mewah mereka, sama sekali tidak menyadari retakan otoritas pertama yang telah terjadi di dermaga bawah.`,
+                        `Kepadatan kalsium dan stamina Raymond terasa semakin kokoh, membuktikan bahwa teori mutasi genomik Zephyris bekerja dengan sempurna tanpa cacat.`,
+                        `Target berikutnya di Marina Valore telah menanti untuk ditaklukkan pada putaran rotasi berikutnya.`,
+                        `Perjalanan panjang untuk menaklukkan tujuh puluh lima wanita terpilih dan memahkotai diri sebagai penguasa mutlak Vesperia kini bergulir nyata.`,
+                        `Cincin Solaria Prime terus berputar tenang di orbitnya, perlahan menyambut fajar kekuasaan dari raja baru yang tak terbendung.`
+                    ];
+                } else {
+                    sentences = [
+                        `Keheningan di koridor marmer putih Solaria Prime selalu dijaga oleh susunan resonator peredam akustik berfrekuensi rendah.`,
+                        `Setiap warga borjuasi yang melangkah di koridor ini mengenakan adibusana biosintetis yang memancarkan pendar prisma lembut di bawah sinar foton murni.`,
+                        `Tidak ada gesekan kelas yang terlihat di permukaan, sebab seluruh kemewahan dijamin oleh neraca termodinamika tertutup yang bekerja tanpa jeda.`,
+                        `Namun, di balik dinding-dinding kaca lengkung yang memisahkan manusia dari kehampaan angkasa, perebutan pengaruh kuota selalu berlangsung sengit.`,
+                        `Raymond mengamati setiap detail arsitektur habitat ini dengan perhitungan dingin seorang pengamat yang mencari celah sistem.`,
+                        `Para pialang daya dan kurator estetika mengira bahwa tahta mereka aman selama reaktor fusi Kaelos memancarkan daya gelombang mikro.`,
+                        `Mereka lupa bahwa seluruh otentikasi peradaban ini bergantung pada cairan biologis dan sentuhan jemari para wanita penguasa gerbang.`,
+                        `Dengan setiap kontak fisik yang dirancang dengan teliti, keseimbangan kekuasaan cincin perlahan bergeser ke arah yang tak terduga.`,
+                        `Udara beraroma nektar teratai sintetis terus berhembus lembut, menyamarkan langkah-langkah konspirasi yang kian merayap pasti.`,
+                        `Matahari putih Aevora Prime membiaskan bayangan panjang di atas lantai marmer, menandai berjalannya siklus waktu yang tak kenal ampun.`
+                    ];
+                }
+                paragraphs.push(sentences.join(' '));
+            }
+
+            const fullText = paragraphs.join('\n\n');
+            document.getElementById('editor').value = fullText;
+            
+            // Mark target conquered
+            if(appState.characterStats[targetChar.id]) {
+                appState.characterStats[targetChar.id].conquered = true;
+            }
+
+            saveCurrentDraft();
+            validateTextFormat(fullText);
+            detectCharactersInText(fullText);
+            alert(`Bab ${chapNum} berhasil disusun otomatis (15 Paragraf x 10 Kalimat = 150 Kalimat) dengan Target #${targetChar.id} ${targetChar.name}!`);
+        }
+
+        function saveCurrentDraft() {
+            const chapNum = appState.currentChapter;
+            const title = document.getElementById('chapter-title').value;
+            const content = document.getElementById('editor').value;
+            appState.chapters[chapNum] = { title, content };
+            saveStateToStorage();
+        }
+
+        function saveDraftToStorage() {
+            saveCurrentDraft();
+            alert('Naskah berhasil disimpan secara lokal!');
+        }
+
+        function saveStateToStorage() {
+            localStorage.setItem('vesperal_skenario_2_state', JSON.stringify({
+                currentChapter: appState.currentChapter,
+                chapters: appState.chapters,
+                characterStats: appState.characterStats
+            }));
+        }
+
+        function loadStateFromStorage() {
+            const raw = localStorage.getItem('vesperal_skenario_2_state');
+            if(raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    if(data.chapters) appState.chapters = data.chapters;
+                    if(data.characterStats) {
+                        Object.keys(data.characterStats).forEach(id => {
+                            if(appState.characterStats[id]) {
+                                appState.characterStats[id].conquered = data.characterStats[id].conquered;
+                            }
+                        });
+                    }
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        function exportDataJson() {
+            saveCurrentDraft();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `vesperal_skenario_2_export_bab${appState.currentChapter}.json`);
+            dlAnchor.click();
+        }
+
+        function triggerImportJson() {
+            document.getElementById('import-file').click();
+        }
+
+        function handleImportJson(evt) {
+            const file = evt.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(imported.chapters) appState.chapters = imported.chapters;
+                    if(imported.characterStats) appState.characterStats = imported.characterStats;
+                    saveStateToStorage();
+                    loadChapter(appState.currentChapter);
+                    recalculateGlobalAppearances();
+                    alert('Data JSON berhasil diimpor!');
+                } catch(err) {
+                    alert('Gagal mengimpor file JSON: Format tidak valid.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function openLoreModal() {
+            document.getElementById('lore-modal').classList.add('active');
+        }
+        function closeLoreModal() {
+            document.getElementById('lore-modal').classList.remove('active');
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
